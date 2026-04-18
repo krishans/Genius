@@ -28,6 +28,7 @@ function App() {
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showReward, setShowReward] = useState(false);
   const [showTimesUp, setShowTimesUp] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
   const timerRef = useRef<any>(null);
 
   const activeProfile = profiles.find(p => p.id === activeId);
@@ -129,8 +130,10 @@ function App() {
 
   const handleLevelUp = () => {
     if (!activeProfile) return;
-    const next: GradeLevel = activeProfile.grade === '5' ? 'K' : (parseInt(activeProfile.grade === 'K' ? '0' : activeProfile.grade) + 1).toString() as GradeLevel;
+    const current = activeProfile.grade;
+    const next: GradeLevel = current === '5' ? 'K' : (parseInt(current === 'K' ? '0' : current) + 1).toString() as GradeLevel;
     updateActiveProfile({ grade: next });
+    if (next !== 'K') setShowLevelUp(true);
   };
 
   return (
@@ -190,15 +193,15 @@ function App() {
             <div className="grid grid-cols-2 gap-2 pt-4">
               <button 
                 onClick={handleLevelUp}
-                className="text-gray-400 font-bold text-[10px] uppercase border border-gray-100 py-2 rounded-lg hover:bg-gray-50"
+                className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-3 rounded-xl hover:bg-green-100 transition-all active:scale-95"
               >
-                Level Up
+                ⬆️ Level Up
               </button>
               <button 
                 onClick={() => setActiveId(null)}
-                className="text-blue-400 font-bold text-[10px] uppercase border border-blue-50 py-2 rounded-lg hover:bg-blue-50"
+                className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-3 rounded-xl hover:bg-blue-100 transition-all active:scale-95"
               >
-                Switch Kid
+                🔄 Switch Kid
               </button>
             </div>
           </div>
@@ -399,6 +402,35 @@ function App() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-blue-800"
               >
                 Keep Practicing
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showLevelUp && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-green-500/95 z-50 flex flex-col items-center justify-center p-6 text-center"
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              className="bg-white p-12 rounded-3xl shadow-2xl border-b-8 border-green-200"
+            >
+              <div className="text-8xl mb-6">🚀</div>
+              <h2 className="text-4xl font-black text-gray-900 mb-2">Level Up!</h2>
+              <p className="text-green-600 font-bold mb-8 uppercase tracking-widest">
+                {activeProfile?.name} is now in Grade {activeProfile?.grade}!
+              </p>
+              <button 
+                onClick={() => setShowLevelUp(false)}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-green-800"
+              >
+                Let's Go!
               </button>
             </motion.div>
           </motion.div>
