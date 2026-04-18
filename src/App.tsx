@@ -17,6 +17,7 @@ function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isAddingKid, setIsAddingKid] = useState(false);
+  const [isSwitchingGrade, setIsSwitchingGrade] = useState(false);
   const [newName, setNewName] = useState('');
   const [newGrade, setNewGrade] = useState<GradeLevel>('K');
   
@@ -28,7 +29,6 @@ function App() {
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showReward, setShowReward] = useState(false);
   const [showTimesUp, setShowTimesUp] = useState(false);
-  const [showLevelUp, setShowLevelUp] = useState(false);
   const timerRef = useRef<any>(null);
 
   const activeProfile = profiles.find(p => p.id === activeId);
@@ -36,8 +36,7 @@ function App() {
   useEffect(() => {
     const saved = localStorage.getItem('genius_profiles_v2');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setProfiles(parsed);
+      setProfiles(JSON.parse(saved));
     }
   }, []);
 
@@ -128,12 +127,9 @@ function App() {
     setChallenge(null);
   };
 
-  const handleLevelUp = () => {
-    if (!activeProfile) return;
-    const current = activeProfile.grade;
-    const next: GradeLevel = current === '5' ? 'K' : (parseInt(current === 'K' ? '0' : current) + 1).toString() as GradeLevel;
-    updateActiveProfile({ grade: next });
-    if (next !== 'K') setShowLevelUp(true);
+  const selectGrade = (g: GradeLevel) => {
+    updateActiveProfile({ grade: g });
+    setIsSwitchingGrade(false);
   };
 
   return (
@@ -177,34 +173,67 @@ function App() {
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-1">Hi, {activeProfile?.name}!</h1>
           <p className="text-blue-600 font-bold mb-8 uppercase tracking-widest text-[10px]">Grade {activeProfile?.grade} Genius</p>
-          <div className="flex flex-col space-y-3">
-            <button 
-              onClick={() => startChallenge(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-lg border-b-4 border-blue-800"
-            >
-              Practice Mode
-            </button>
-            <button 
-              onClick={() => startChallenge(true)}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-lg border-b-4 border-orange-800"
-            >
-              ⚡ Speed Round
-            </button>
-            <div className="grid grid-cols-2 gap-2 pt-4">
-              <button 
-                onClick={handleLevelUp}
-                className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-3 rounded-xl hover:bg-green-100 transition-all active:scale-95"
+          
+          <AnimatePresence mode="wait">
+            {isSwitchingGrade ? (
+              <motion.div 
+                key="grade-picker"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6"
               >
-                ⬆️ Level Up
-              </button>
-              <button 
-                onClick={() => setActiveId(null)}
-                className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-3 rounded-xl hover:bg-blue-100 transition-all active:scale-95"
+                <p className="text-[10px] font-black text-gray-400 mb-3 uppercase">Choose New Grade:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['K', '1', '2', '3', '4', '5'] as GradeLevel[]).map(g => (
+                    <button
+                      key={g}
+                      onClick={() => selectGrade(g)}
+                      className={`py-2 rounded-xl font-black text-lg transition-all ${activeProfile?.grade === g ? 'bg-blue-600 text-white' : 'bg-gray-100 text-blue-600'}`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setIsSwitchingGrade(false)} className="mt-4 text-[10px] font-bold text-gray-400 uppercase">Cancel</button>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="main-menu"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col space-y-3"
               >
-                🔄 Switch Kid
-              </button>
-            </div>
-          </div>
+                <button 
+                  onClick={() => startChallenge(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-lg border-b-4 border-blue-800"
+                >
+                  Practice Mode
+                </button>
+                <button 
+                  onClick={() => startChallenge(true)}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-lg border-b-4 border-orange-800"
+                >
+                  ⚡ Speed Round
+                </button>
+                <div className="grid grid-cols-2 gap-2 pt-4">
+                  <button 
+                    onClick={() => setIsSwitchingGrade(true)}
+                    className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-3 rounded-xl hover:bg-green-100 transition-all active:scale-95"
+                  >
+                    🎓 Switch Grade
+                  </button>
+                  <button 
+                    onClick={() => setActiveId(null)}
+                    className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-3 rounded-xl hover:bg-blue-100 transition-all active:scale-95"
+                  >
+                    🔄 Switch Kid
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
           <div className="mt-8 flex justify-between text-gray-400 font-black uppercase tracking-widest text-[10px]">
             <span>Total: {activeProfile?.totalScore}</span>
             <span>Best: {activeProfile?.highScore}</span>
@@ -402,35 +431,6 @@ function App() {
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-blue-800"
               >
                 Keep Practicing
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showLevelUp && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-green-500/95 z-50 flex flex-col items-center justify-center p-6 text-center"
-          >
-            <motion.div
-              initial={{ scale: 0, rotate: -10 }}
-              animate={{ scale: 1, rotate: 0 }}
-              className="bg-white p-12 rounded-3xl shadow-2xl border-b-8 border-green-200"
-            >
-              <div className="text-8xl mb-6">🚀</div>
-              <h2 className="text-4xl font-black text-gray-900 mb-2">Level Up!</h2>
-              <p className="text-green-600 font-bold mb-8 uppercase tracking-widest">
-                {activeProfile?.name} is now in Grade {activeProfile?.grade}!
-              </p>
-              <button 
-                onClick={() => setShowLevelUp(false)}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-green-800"
-              >
-                Let's Go!
               </button>
             </motion.div>
           </motion.div>
