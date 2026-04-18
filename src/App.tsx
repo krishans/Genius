@@ -54,7 +54,7 @@ function App() {
           className="bg-white p-12 rounded-3xl shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200"
         >
           <div className="w-24 h-24 bg-blue-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg transform rotate-3">
-            <span className="text-white font-black text-5xl">M</span>
+            <span className="text-white font-black text-5xl">G</span>
           </div>
           <h1 className="text-4xl font-black text-gray-900 mb-2">Genius</h1>
           <p className="text-blue-600 font-bold mb-8 uppercase tracking-widest text-sm">Fun Math Challenges</p>
