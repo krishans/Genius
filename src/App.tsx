@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MathEngine, Challenge, GradeLevel, Difficulty } from './logic/MathEngine';
+import { MathEngine, Challenge, GradeLevel } from './logic/MathEngine';
 
 interface Profile {
   id: string;
   name: string;
   grade: GradeLevel;
-  difficulty: Difficulty;
+  level: number; // 1-10
   totalScore: number;
   highScore: number;
   avatar: string;
@@ -31,20 +31,22 @@ function App() {
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [showReward, setShowReward] = useState(false);
   const [showTimesUp, setShowTimesUp] = useState(false);
-  const [showDiffUp, setShowDiffUp] = useState<Difficulty | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState<number | null>(null);
   const timerRef = useRef<any>(null);
 
   const activeProfile = profiles.find(p => p.id === activeId);
 
+  // Persistence
   useEffect(() => {
-    const saved = localStorage.getItem('genius_profiles_v3');
+    const saved = localStorage.getItem('genius_profiles_v4');
     if (saved) setProfiles(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    if (profiles.length > 0) localStorage.setItem('genius_profiles_v3', JSON.stringify(profiles));
+    if (profiles.length > 0) localStorage.setItem('genius_profiles_v4', JSON.stringify(profiles));
   }, [profiles]);
 
+  // Timer
   useEffect(() => {
     if (isPlaying && isTimeMode && timeLeft > 0) {
       timerRef.current = setInterval(() => setTimeLeft(t => t - 1), 1000);
@@ -61,7 +63,7 @@ function App() {
       id: Math.random().toString(36).substr(2, 9),
       name: newName,
       grade: newGrade,
-      difficulty: 'Easy',
+      level: 1,
       totalScore: 0,
       highScore: 0,
       avatar: AVATARS[profiles.length % AVATARS.length]
@@ -83,7 +85,7 @@ function App() {
     setScore(0);
     setStreak(0);
     setFeedback(null);
-    setChallenge(MathEngine.generate(activeProfile.grade, activeProfile.difficulty));
+    setChallenge(MathEngine.generate(activeProfile.grade, activeProfile.level));
     setIsPlaying(true);
   };
 
@@ -96,35 +98,33 @@ function App() {
       setScore(newScore);
       setStreak(newStreak);
       
-      let newDiff = activeProfile.difficulty;
-      if (newStreak >= 5) {
-        if (newDiff === 'Easy') newDiff = 'Medium';
-        else if (newDiff === 'Medium') newDiff = 'Hard';
-        
-        if (newDiff !== activeProfile.difficulty) {
-           setShowDiffUp(newDiff);
-           setStreak(0);
-           setTimeout(() => setShowDiffUp(null), 2000);
-        }
+      let newLevel = activeProfile.level;
+      // Adaptive Difficulty: Level up every 5 streak
+      if (newStreak >= 5 && newLevel < 10) {
+        newLevel += 1;
+        setShowLevelUp(newLevel);
+        setStreak(0);
+        setTimeout(() => setShowLevelUp(null), 2000);
       }
 
       const updatedTotal = activeProfile.totalScore + 1;
       updateActiveProfile({
         totalScore: updatedTotal,
-        difficulty: newDiff,
+        level: newLevel,
         highScore: isTimeMode && newScore > activeProfile.highScore ? newScore : activeProfile.highScore
       });
 
       setFeedback('correct');
       setTimeout(() => {
-        setChallenge(MathEngine.generate(activeProfile.grade, newDiff));
+        setChallenge(MathEngine.generate(activeProfile.grade, newLevel));
         setFeedback(null);
       }, 1000);
     } else {
       setFeedback('incorrect');
       setStreak(0);
-      if (activeProfile.difficulty !== 'Easy') {
-         updateActiveProfile({ difficulty: activeProfile.difficulty === 'Hard' ? 'Medium' : 'Easy' });
+      // Auto-Correction: Drop level on error if above Level 1
+      if (activeProfile.level > 1) {
+         updateActiveProfile({ level: activeProfile.level - 1 });
       }
       setTimeout(() => setFeedback(null), 800);
     }
@@ -139,7 +139,7 @@ function App() {
   };
 
   const selectGrade = (g: GradeLevel) => {
-    updateActiveProfile({ grade: g, difficulty: 'Easy' });
+    updateActiveProfile({ grade: g, level: 1 });
     setIsSwitchingGrade(false);
   };
 
@@ -167,7 +167,7 @@ function App() {
              <span className="text-white font-black text-4xl">{activeProfile?.avatar}</span>
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-1 tracking-tight">Hi, {activeProfile?.name}!</h1>
-          <p className="text-blue-600 font-bold mb-8 uppercase tracking-widest text-[10px]">Grade {activeProfile?.grade} | {activeProfile?.difficulty} Level</p>
+          <p className="text-blue-600 font-bold mb-8 uppercase tracking-widest text-[10px]">Grade {activeProfile?.grade} | Level {activeProfile?.level}</p>
           
           <AnimatePresence mode="wait">
             {isSwitchingGrade ? (
@@ -200,7 +200,7 @@ function App() {
           <div className="flex justify-between items-center mb-6">
             <div className="bg-white px-4 py-2 rounded-full shadow-md border-b-4 border-gray-100 font-black text-blue-600 flex items-center space-x-2 text-sm">
               <span className="text-lg">{activeProfile?.avatar}</span>
-              <span className="uppercase tracking-tighter">G{activeProfile?.grade} | {activeProfile?.difficulty}</span>
+              <span className="uppercase tracking-tighter">G{activeProfile?.grade} | L{activeProfile?.level}</span>
             </div>
             <div className="flex items-center space-x-2">
               {streak >= 3 && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="bg-orange-500 text-white px-3 py-1 rounded-full font-black text-xs shadow-lg">🔥 {streak}</motion.div>}
@@ -249,9 +249,9 @@ function App() {
             </motion.div>
           </motion.div>
         )}
-        {showDiffUp && (
+        {showLevelUp && (
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1.1 }} exit={{ scale: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-             <div className="bg-yellow-400 text-white font-black p-8 rounded-full shadow-2xl text-2xl border-b-8 border-yellow-600 animate-bounce text-center">🔥 RANK UP! 🔥<br/>{showDiffUp} Level</div>
+             <div className="bg-yellow-400 text-white font-black p-8 rounded-full shadow-2xl text-2xl border-b-8 border-yellow-600 animate-bounce text-center">🚀 LEVEL UP! 🚀<br/>Level {showLevelUp}</div>
           </motion.div>
         )}
         {showTimesUp && (
