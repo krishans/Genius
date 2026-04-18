@@ -229,19 +229,27 @@ function App() {
             >
               <div className="text-7xl mb-4">⏰</div>
               <h2 className="text-4xl font-black text-gray-900 mb-2">Time's Up!</h2>
-              <div className="bg-orange-100 p-6 rounded-2xl mb-8">
+              <div className="bg-orange-100 p-6 rounded-2xl mb-6">
                 <p className="text-gray-600 font-bold uppercase tracking-widest text-xs mb-1">You Scored</p>
                 <p className="text-5xl font-black text-orange-600">{score}</p>
                 {score >= highScore && score > 0 && (
                   <p className="text-green-600 font-black mt-2 text-sm">🏆 NEW HIGH SCORE!</p>
                 )}
               </div>
-              <button 
-                onClick={resetGame}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-orange-800"
-              >
-                Play Again
-              </button>
+              <div className="flex flex-col space-y-3">
+                <button 
+                  onClick={() => startChallenge(grade!, true)}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95 text-xl border-b-4 border-orange-800"
+                >
+                  Try Again
+                </button>
+                <button 
+                  onClick={resetGame}
+                  className="w-full bg-white text-gray-500 font-black py-4 px-8 rounded-2xl shadow-lg transition-all active:scale-95 text-lg border-b-4 border-gray-200"
+                >
+                  Go Home
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
