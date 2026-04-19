@@ -8,7 +8,7 @@ interface Profile {
 
 const AVATARS = ['🚀', '🦄', '🦖', '🎨', '⚽', '🐯'];
 const TYPE_LABELS: Record<MathType, string> = { 
-  ADD: '➕ Addition', SUB: '➖ Subtraction', MUL: '✖️ Multiplication', DIV: '➗ Division', MISSING: '❓ Missing Numbers', SHAPE: '📐 Shapes', DECIMAL: '🔢 Decimals' 
+  ADD: '➕ Addition', SUB: '➖ Subtraction', MUL: '✖️ Multiplication', DIV: '➗ Division', MISSING: '❓ Missing Numbers', SHAPE: '📐 Shapes', DECIMAL: '🔢 Decimals', FRACTION: '🍰 Fractions' 
 };
 
 function App() {
@@ -157,8 +157,8 @@ function App() {
               </motion.div>
             ) : (
               <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col space-y-4">
-                <button onClick={() => setIsFocusMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase tracking-wide italic">Practice Mode</button>
-                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-orange-800 uppercase tracking-wide italic">⚡ Speed Round</button>
+                <button onClick={() => setIsFocusMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase tracking-wide italic text-center">Practice Mode</button>
+                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-orange-800 uppercase tracking-wide italic text-center">⚡ Speed Round</button>
                 <div className="grid grid-cols-2 gap-3 pt-4 text-center">
                   <button onClick={() => setIsSwitchingGrade(true)} className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-4 rounded-2xl hover:bg-green-100 transition-all active:scale-95">🎓 Switch Grade</button>
                   <button onClick={() => setActiveId(null)} className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-4 rounded-2xl hover:bg-blue-100 transition-all active:scale-95">🔄 Switch Kid</button>
@@ -171,7 +171,7 @@ function App() {
           </div>
         </motion.div>
       ) : isPlaying ? (
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-lg text-center">
           <div className="flex justify-between items-center mb-6">
             <div className="bg-white px-4 py-2 rounded-full shadow-md border-b-4 border-gray-100 font-black text-blue-600 flex items-center space-x-2 text-sm italic">
               <span className="text-xl">{activeProfile?.avatar}</span>
@@ -195,8 +195,8 @@ function App() {
                   </div>
                 </motion.div>
                 <AnimatePresence>
-                  {feedback === 'correct' && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1.3, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="bg-green-500 text-white font-black py-10 px-16 rounded-full shadow-2xl text-5xl rotate-12 border-b-8 border-green-700">⭐ Correct!</div></motion.div>}
-                  {feedback === 'incorrect' && <motion.div initial={{ x: 0 }} animate={{ x: [15, -15, 15, -15, 0] }} exit={{ opacity: 0 }} className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="bg-red-500 text-white font-black py-10 px-16 rounded-full shadow-2xl text-5xl -rotate-6 border-b-8 border-red-700">Oops!</div></motion.div>}
+                  {feedback === 'correct' && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1.3, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} className="absolute inset-0 flex items-center justify-center pointer-events-none text-center"><div className="bg-green-500 text-white font-black py-10 px-16 rounded-full shadow-2xl text-5xl rotate-12 border-b-8 border-green-700">⭐ Correct!</div></motion.div>}
+                  {feedback === 'incorrect' && <motion.div initial={{ x: 0 }} animate={{ x: [15, -15, 15, -15, 0] }} exit={{ opacity: 0 }} className="absolute inset-0 flex items-center justify-center pointer-events-none text-center"><div className="bg-red-500 text-white font-black py-10 px-16 rounded-full shadow-2xl text-5xl -rotate-6 border-b-8 border-red-700">Oops!</div></motion.div>}
                 </AnimatePresence>
               </div>
             )}
@@ -219,27 +219,27 @@ function App() {
                     <button key={g} onClick={() => setNewGrade(g)} className={`py-4 rounded-2xl font-black text-xl transition-all ${newGrade === g ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}>{g}</button>
                   ))}</div>
                 </div>
-                <div className="flex pt-6 space-x-3 text-center"><button onClick={() => setIsAddingKid(false)} className="flex-1 font-black text-gray-400 uppercase tracking-widest text-sm">Cancel</button><button disabled={!newName.trim()} onClick={addProfile} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 text-xl uppercase italic">LET'S GO!</button></div>
+                <div className="flex pt-6 space-x-3 text-center"><button onClick={() => setIsAddingKid(false)} className="flex-1 font-black text-gray-400 uppercase tracking-widest text-sm text-center">Cancel</button><button disabled={!newName.trim()} onClick={addProfile} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 text-xl uppercase italic text-center">LET'S GO!</button></div>
               </div>
             </motion.div>
           </motion.div>
         )}
         {showLevelUp && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1.2 }} exit={{ scale: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1.2 }} exit={{ scale: 0 }} className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none text-center">
              <div className="bg-yellow-400 text-white font-black p-12 rounded-full shadow-2xl text-3xl border-b-8 border-yellow-600 animate-bounce text-center italic uppercase">🚀 RANK UP! 🚀<br/>Level {showLevelUp}</div>
           </motion.div>
         )}
         {showTimesUp && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-orange-500/95 z-50 flex flex-col items-center justify-center p-6 text-center">
             <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="bg-white p-12 rounded-[40px] shadow-2xl border-b-8 border-orange-200 w-full max-w-sm">
-              <div className="text-8xl mb-6 text-orange-500 animate-pulse">⏰</div>
+              <div className="text-8xl mb-6 text-orange-500 animate-pulse text-center">⏰</div>
               <h2 className="text-4xl font-black text-gray-900 mb-2 uppercase italic tracking-tighter text-center">Time's Up!</h2>
               <div className="bg-orange-50 p-8 rounded-3xl mb-8 border-b-4 border-orange-100"><p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest mb-1 text-center">Total Scored</p><p className="text-7xl font-black text-orange-600 text-center">{sessionScore}</p>
                 {activeProfile && sessionScore >= activeProfile.highScore && sessionScore > 0 && <p className="text-green-600 font-black mt-3 text-sm tracking-tight animate-bounce text-center">🏆 NEW HIGH SCORE! 🏆</p>}
               </div>
-              <div className="flex flex-col space-y-4">
-                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-3xl shadow-xl transition-all active:scale-95 text-2xl border-b-8 border-orange-800 uppercase italic tracking-wider">TRY AGAIN</button>
-                <button onClick={resetGame} className="w-full bg-white text-gray-400 font-black py-6 rounded-3xl shadow-lg transition-all active:scale-95 text-xl border-b-8 border-gray-100 uppercase tracking-widest">GO HOME</button>
+              <div className="flex flex-col space-y-4 text-center">
+                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-3xl shadow-xl transition-all active:scale-95 text-2xl border-b-8 border-orange-800 uppercase italic tracking-wider text-center">TRY AGAIN</button>
+                <button onClick={resetGame} className="w-full bg-white text-gray-400 font-black py-6 rounded-3xl shadow-lg transition-all active:scale-95 text-xl border-b-8 border-gray-100 uppercase tracking-widest text-center">GO HOME</button>
               </div>
             </motion.div>
           </motion.div>
