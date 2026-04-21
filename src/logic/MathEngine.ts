@@ -1,32 +1,39 @@
 export type GradeLevel = 'K' | '1' | '2' | '3' | '4' | '5';
 export type MathType = 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'MISSING' | 'SHAPE' | 'FRACTION' | 'DECIMAL' | 'MONEY' | 'VOLUME';
 
+export interface ModuleInfo {
+  id: number; name: string; types: MathType[];
+}
+
 export interface Challenge {
   id: string; grade: GradeLevel; type: MathType; level: number; question: string; options: string[]; answer: string;
 }
 
 export class MathEngine {
+  static getModulesForGrade(grade: GradeLevel): ModuleInfo[] {
+    switch (grade) {
+      case 'K': return [{ id: 1, name: 'Numbers to 10', types: ['ADD'] }, { id: 2, name: '2D & 3D Shapes', types: ['SHAPE'] }, { id: 4, name: 'Number Bonds', types: ['ADD', 'SUB'] }];
+      case '1': return [{ id: 1, name: 'Sums to 10', types: ['ADD', 'SUB'] }, { id: 4, name: 'Place Value/Add to 100', types: ['ADD', 'MISSING'] }, { id: 5, name: 'Shapes & Halves', types: ['SHAPE'] }];
+      case '2': return [{ id: 1, name: 'Sums to 100', types: ['ADD', 'SUB'] }, { id: 7, name: 'Money & Data', types: ['MONEY'] }, { id: 8, name: 'Sums to 1000', types: ['ADD', 'SUB', 'MISSING'] }];
+      case '3': return [{ id: 1, name: 'Multiplication (10x10)', types: ['MUL', 'DIV'] }, { id: 5, name: 'Fractions', types: ['FRACTION'] }, { id: 7, name: 'Geometry & Perimeter', types: ['ADD', 'SUB'] }];
+      case '4': return [{ id: 3, name: 'Multi-Digit Mul/Div', types: ['MUL', 'DIV'] }, { id: 5, name: 'Fraction Operations', types: ['FRACTION'] }, { id: 6, name: 'Decimals', types: ['DECIMAL'] }];
+      case '5': return [{ id: 1, name: 'Decimal Operations', types: ['DECIMAL'] }, { id: 3, name: 'Fraction Arithmetic', types: ['FRACTION'] }, { id: 5, name: 'Volume & Area', types: ['VOLUME', 'MUL'] }];
+      default: return [];
+    }
+  }
+
   static generate(grade: GradeLevel, level: number, allowedTypes?: MathType[]): Challenge {
     const availableTypes = this.getTypesForGrade(grade, level);
     const types = allowedTypes && allowedTypes.length > 0 ? allowedTypes.filter(t => availableTypes.includes(t)) : availableTypes;
     const finalTypes = types.length > 0 ? types : availableTypes;
     const type = finalTypes[Math.floor(Math.random() * finalTypes.length)];
-
     switch (type) {
-      case 'SHAPE': return this.genShape(grade, level);
-      case 'MISSING': return this.genMissing(grade, level);
-      case 'MUL': return this.genMul(grade, level);
-      case 'DIV': return this.genDiv(grade, level);
-      case 'FRACTION': return this.genFraction(grade, level);
-      case 'DECIMAL': return this.genDecimal(grade, level);
-      case 'MONEY': return this.genMoney(grade, level);
-      case 'VOLUME': return this.genVolume(grade, level);
-      case 'SUB': return this.genSub(grade, level);
+      case 'SHAPE': return this.genShape(grade, level); case 'MISSING': return this.genMissing(grade, level); case 'MUL': return this.genMul(grade, level); case 'DIV': return this.genDiv(grade, level); case 'FRACTION': return this.genFraction(grade, level); case 'DECIMAL': return this.genDecimal(grade, level); case 'MONEY': return this.genMoney(grade, level); case 'VOLUME': return this.genVolume(grade, level); case 'SUB': return this.genSub(grade, level);
       default: return this.genAdd(grade, level);
     }
   }
 
-  static getTypesForGrade(grade: GradeLevel, level: number): MathType[] {
+  private static getTypesForGrade(grade: GradeLevel, level: number): MathType[] {
     switch (grade) {
       case 'K': return level <= 3 ? ['SHAPE'] : ['ADD', 'SUB'];
       case '1': return level <= 4 ? ['ADD', 'SUB'] : (level <= 8 ? ['MISSING'] : ['ADD', 'SUB', 'SHAPE']);

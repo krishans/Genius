@@ -3,20 +3,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MathEngine, Challenge, GradeLevel, MathType } from './logic/MathEngine';
 
 interface Profile {
-  id: string; name: string; grade: GradeLevel; level: number; totalScore: number; highScore: number; avatar: string; focusAreas?: MathType[];
+  id: string; 
+  name: string; 
+  grade: GradeLevel; 
+  level: number; 
+  totalScore: number; 
+  highScore: number; 
+  avatar: string; 
+  focusModuleId?: number;
 }
 
 const AVATARS = ['🚀', '🦄', '🦖', '🎨', '⚽', '🐯'];
-const TYPE_LABELS: Record<MathType, string> = { 
-  ADD: '➕ Addition', SUB: '➖ Subtraction', MUL: '✖️ Multiplication', DIV: '➗ Division', MISSING: '❓ Missing Numbers', SHAPE: '📐 Shapes', DECIMAL: '🔢 Decimals', FRACTION: '🍰 Fractions', MONEY: '💰 Money', VOLUME: '🧊 Volume'
-};
 
 function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isAddingKid, setIsAddingKid] = useState(false);
   const [isSwitchingGrade, setIsSwitchingGrade] = useState(false);
-  const [isChoosingFocus, setIsFocusMode] = useState(false);
+  const [isChoosingModule, setIsModuleMode] = useState(false);
   const [newName, setNewName] = useState('');
   const [newGrade, setNewGrade] = useState<GradeLevel>('K');
   
@@ -34,12 +38,12 @@ function App() {
   const activeProfile = profiles.find(p => p.id === activeId);
 
   useEffect(() => {
-    const saved = localStorage.getItem('genius_profiles_v5');
+    const saved = localStorage.getItem('genius_profiles_v6');
     if (saved) setProfiles(JSON.parse(saved));
   }, []);
 
   useEffect(() => {
-    if (profiles.length > 0) localStorage.setItem('genius_profiles_v5', JSON.stringify(profiles));
+    if (profiles.length > 0) localStorage.setItem('genius_profiles_v6', JSON.stringify(profiles));
   }, [profiles]);
 
   useEffect(() => {
@@ -54,31 +58,23 @@ function App() {
   const addProfile = () => {
     if (!newName.trim()) return;
     const newProf: Profile = {
-      id: Math.random().toString(36).substr(2, 9), name: newName, grade: newGrade, level: 1, totalScore: 0, highScore: 0, avatar: AVATARS[profiles.length % AVATARS.length], focusAreas: []
+      id: Math.random().toString(36).substr(2, 9), name: newName, grade: newGrade, level: 1, totalScore: 0, highScore: 0, avatar: AVATARS[profiles.length % AVATARS.length]
     };
-    setProfiles([...profiles, newProf]);
-    setActiveId(newProf.id);
-    setIsAddingKid(false);
-    setNewName('');
+    setProfiles([...profiles, newProf]); setActiveId(newProf.id); setIsAddingKid(false); setNewName('');
   };
 
   const updateActiveProfile = (updates: Partial<Profile>) => {
     setProfiles(prev => prev.map(p => p.id === activeId ? { ...p, ...updates } : p));
   };
 
-  const toggleFocus = (type: MathType) => {
-    if (!activeProfile) return;
-    const current = activeProfile.focusAreas || [];
-    const next = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
-    updateActiveProfile({ focusAreas: next });
-  };
-
   const startChallenge = (timeMode: boolean) => {
     if (!activeProfile) return;
     setIsTimeMode(timeMode);
     setTimeLeft(60); setScore(0); setStreak(0); setFeedback(null);
-    setChallenge(MathEngine.generate(activeProfile.grade, activeProfile.level, timeMode ? [] : activeProfile.focusAreas));
-    setIsPlaying(true); setIsFocusMode(false);
+    const moduleId = timeMode ? undefined : activeProfile.focusModuleId;
+    const allowedTypes = moduleId ? MathEngine.getModulesForGrade(activeProfile.grade).find(m => m.id === moduleId)?.types : [];
+    setChallenge(MathEngine.generate(activeProfile.grade, activeProfile.level, allowedTypes));
+    setIsPlaying(true); setIsModuleMode(false);
   };
 
   const handleAnswer = (correct: boolean) => {
@@ -89,7 +85,11 @@ function App() {
       if (nstr >= 5 && nl < 10) { nl += 1; setShowLevelUp(nl); setStreak(0); setTimeout(() => setShowLevelUp(null), 2000); }
       updateActiveProfile({ totalScore: activeProfile.totalScore + 1, level: nl, highScore: isTimeMode && ns > activeProfile.highScore ? ns : activeProfile.highScore });
       setFeedback('correct');
-      setTimeout(() => { setChallenge(MathEngine.generate(activeProfile.grade, nl, isTimeMode ? [] : activeProfile.focusAreas)); setFeedback(null); }, 1000);
+      setTimeout(() => {
+        const allowed = !isTimeMode && activeProfile.focusModuleId ? MathEngine.getModulesForGrade(activeProfile.grade).find(m => m.id === activeProfile.focusModuleId)?.types : [];
+        setChallenge(MathEngine.generate(activeProfile.grade, nl, allowed));
+        setFeedback(null);
+      }, 1000);
     } else {
       setFeedback('incorrect'); setStreak(0);
       if (activeProfile.level > 1) updateActiveProfile({ level: activeProfile.level - 1 });
@@ -100,7 +100,7 @@ function App() {
   const resetGame = () => { setIsPlaying(false); setIsTimeMode(false); setShowTimesUp(false); setChallenge(null); setFeedback(null); };
 
   const selectGrade = (g: GradeLevel) => {
-    updateActiveProfile({ grade: g, level: 1, focusAreas: [] });
+    updateActiveProfile({ grade: g, level: 1, focusModuleId: undefined });
     setIsSwitchingGrade(false);
   };
 
@@ -132,22 +132,25 @@ function App() {
           <p className="text-blue-600 font-bold mb-8 uppercase tracking-widest text-[10px]">Grade {activeProfile?.grade} | Level {activeProfile?.level}</p>
           
           <AnimatePresence mode="wait">
-            {isChoosingFocus && activeProfile ? (
+            {isChoosingModule && activeProfile ? (
               <motion.div key="focus" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-left">
-                <p className="text-[10px] font-black text-gray-400 mb-4 uppercase text-center tracking-widest">Focus Areas (Optional):</p>
+                <p className="text-[10px] font-black text-gray-400 mb-4 uppercase text-center tracking-widest italic">Choose Module Practice:</p>
                 <div className="grid grid-cols-1 gap-2 mb-6">
-                  {MathEngine.getTypesForGrade(activeProfile.grade, activeProfile.level).map(type => (
-                    <button key={type} onClick={() => toggleFocus(type)} className={`w-full p-4 rounded-2xl font-black text-sm flex justify-between items-center transition-all ${activeProfile.focusAreas?.includes(type) ? 'bg-blue-600 text-white shadow-lg scale-95' : 'bg-blue-50 text-blue-800'}`}>
-                      {TYPE_LABELS[type]} {activeProfile.focusAreas?.includes(type) && '✅'}
+                  <button onClick={() => updateActiveProfile({ focusModuleId: undefined })} className={`w-full p-4 rounded-2xl font-black text-sm flex justify-between items-center transition-all ${!activeProfile.focusModuleId ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-800'}`}>
+                    🌟 Mixed Practice {!activeProfile.focusModuleId && '✅'}
+                  </button>
+                  {MathEngine.getModulesForGrade(activeProfile.grade).map(mod => (
+                    <button key={mod.id} onClick={() => updateActiveProfile({ focusModuleId: mod.id })} className={`w-full p-4 rounded-2xl font-black text-sm flex justify-between items-center transition-all ${activeProfile.focusModuleId === mod.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-800'}`}>
+                      📦 Mod {mod.id}: {mod.name} {activeProfile.focusModuleId === mod.id && '✅'}
                     </button>
                   ))}
                 </div>
-                <button onClick={() => startChallenge(false)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl border-b-8 border-blue-800 shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider text-center">START</button>
-                <button onClick={() => setIsFocusMode(false)} className="w-full text-[10px] mt-6 text-gray-400 font-bold text-center uppercase tracking-widest">Back</button>
+                <button onClick={() => startChallenge(false)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl border-b-8 border-blue-800 shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider text-center italic">PLAY NOW</button>
+                <button onClick={() => setIsModuleMode(false)} className="w-full text-[10px] mt-6 text-gray-400 font-bold text-center uppercase tracking-widest">Back</button>
               </motion.div>
             ) : isSwitchingGrade ? (
               <motion.div key="grade" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
-                <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest text-center">Choose Your Grade:</p>
+                <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest text-center italic">Choose Your Grade:</p>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {(['K','1','2','3','4','5'] as GradeLevel[]).map(g => (
                     <button key={g} onClick={() => selectGrade(g)} className={`py-4 rounded-2xl font-black text-xl transition-all ${activeProfile?.grade === g ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>{g}</button>
@@ -157,7 +160,7 @@ function App() {
               </motion.div>
             ) : (
               <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col space-y-4">
-                <button onClick={() => setIsFocusMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase tracking-wide italic text-center">Practice Mode</button>
+                <button onClick={() => setIsModuleMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase tracking-wide italic text-center">Practice Mode</button>
                 <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-orange-800 uppercase tracking-wide italic text-center">⚡ Speed Round</button>
                 <div className="grid grid-cols-2 gap-3 pt-4 text-center">
                   <button onClick={() => setIsSwitchingGrade(true)} className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-4 rounded-2xl hover:bg-green-100 transition-all active:scale-95">🎓 Switch Grade</button>
@@ -186,11 +189,11 @@ function App() {
           <AnimatePresence mode="wait">
             {challenge && (
               <div className="relative">
-                <motion.div key={challenge.id} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl border-b-8 border-gray-200">
+                <motion.div key={challenge.id} initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl border-b-8 border-gray-200 text-center">
                   <h2 className="text-4xl md:text-6xl font-black text-gray-800 mb-12 text-center leading-tight tracking-tighter">{challenge.question}</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {challenge.options.map((opt) => (
-                      <button key={opt} disabled={!!feedback} onClick={() => handleAnswer(opt === challenge.answer)} className="bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-800 font-black py-10 rounded-3xl text-3xl md:text-5xl transition-all active:scale-95 shadow-md border-b-8 border-blue-100 hover:border-blue-800 disabled:opacity-50">{opt}</button>
+                      <button key={opt} disabled={!!feedback} onClick={() => handleAnswer(opt === challenge.answer)} className="bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-800 font-black py-10 rounded-3xl text-3xl md:text-5xl transition-all active:scale-95 shadow-md border-b-8 border-blue-100 hover:border-blue-800 disabled:opacity-50 text-center">{opt}</button>
                     ))}
                   </div>
                 </motion.div>
