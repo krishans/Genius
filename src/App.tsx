@@ -3,8 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MathEngine, Challenge, GradeLevel, MathType } from './logic/MathEngine';
 
 interface Profile {
-  id: string; name: string; grade: GradeLevel; level: number; totalScore: number; highScore: number; avatar: string; focusModuleId?: number;
-  moduleStats: Record<string, boolean[]>; // Tracks last 100 results per moduleId
+  id: string; 
+  name: string; 
+  grade: GradeLevel; 
+  level: number; 
+  totalScore: number; 
+  highScore: number; 
+  avatar: string; 
+  focusModuleId?: number;
+  moduleStats: Record<string, boolean[]>;
 }
 
 const AVATARS = ['🚀', '🦄', '🦖', '🎨', '⚽', '🐯'];
@@ -36,12 +43,20 @@ function App() {
   const activeProfile = profiles.find(p => p.id === activeId);
 
   useEffect(() => {
-    const saved = localStorage.getItem('genius_profiles_v7');
-    if (saved) setProfiles(JSON.parse(saved));
+    const saved = localStorage.getItem('genius_profiles_v8');
+    if (saved) {
+      try {
+        setProfiles(JSON.parse(saved));
+      } catch(e) {
+        console.error("Failed to parse profiles", e);
+      }
+    }
   }, []);
 
   useEffect(() => {
-    if (profiles.length > 0) localStorage.setItem('genius_profiles_v7', JSON.stringify(profiles));
+    if (profiles.length > 0) {
+      localStorage.setItem('genius_profiles_v8', JSON.stringify(profiles));
+    }
   }, [profiles]);
 
   useEffect(() => {
@@ -71,7 +86,8 @@ function App() {
     setTimeLeft(60); setScore(0); setStreak(0); setFeedback(null);
     const modId = timeMode ? undefined : activeProfile.focusModuleId;
     const allowed = modId ? MathEngine.getModulesForGrade(activeProfile.grade).find(m => m.id === modId)?.types : [];
-    setChallenge(MathEngine.generate(activeProfile.grade, activeProfile.level, allowed));
+    const ch = MathEngine.generate(activeProfile.grade, activeProfile.level, allowed);
+    setChallenge(ch);
     setIsPlaying(true); setIsModuleMode(false);
   };
 
@@ -81,14 +97,17 @@ function App() {
     const nstr = correct ? streak + 1 : 0;
     setScore(ns); setStreak(nstr);
     
-    // Update Module Stats (last 100)
     const mid = challenge.moduleId.toString();
     const currentHist = activeProfile.moduleStats[mid] || [];
     const nextHist = [...currentHist, correct].slice(-100);
     
     let nl = activeProfile.level;
-    if (correct && nstr >= 5 && nl < 10) { nl += 1; setShowLevelUp(nl); setTimeout(() => setShowLevelUp(null), 2000); }
-    if (!correct && nl > 1) { nl -= 1; }
+    if (correct && nstr >= 5 && nl < 10) { 
+      nl += 1; 
+      setShowLevelUp(nl); 
+      setTimeout(() => setShowLevelUp(null), 2000); 
+    }
+    if (!correct && nl > 1) nl -= 1;
 
     updateActiveProfile({
       totalScore: activeProfile.totalScore + (correct ? 1 : 0),
@@ -121,27 +140,32 @@ function App() {
 
   const resetGame = () => { setIsPlaying(false); setIsTimeMode(false); setShowTimesUp(false); setChallenge(null); setFeedback(null); };
 
+  const selectGrade = (g: GradeLevel) => {
+    updateActiveProfile({ grade: g, level: 1, focusModuleId: undefined });
+    setIsSwitchingGrade(false);
+  };
+
   return (
     <div className="min-h-screen bg-blue-50 flex flex-col items-center justify-center p-4 font-sans overflow-hidden text-center">
       {!activeId ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200">
           <h1 className="text-3xl font-black text-gray-900 mb-8 tracking-tight">Who is playing?</h1>
           <div className="grid grid-cols-2 gap-4 mb-8">
             {profiles.map(p => (
-              <button key={p.id} onClick={() => setActiveId(p.id)} className="flex flex-col items-center p-4 rounded-2xl hover:bg-blue-50 transition-all border-2 border-transparent hover:border-blue-200">
+              <button key={p.id} onClick={() => setActiveId(p.id)} className="flex flex-col items-center p-4 rounded-3xl hover:bg-blue-50 transition-all border-2 border-transparent hover:border-blue-200">
                 <span className="text-5xl mb-2">{p.avatar}</span>
                 <span className="font-black text-gray-700">{p.name}</span>
-                <span className="text-[10px] text-blue-500 font-bold uppercase">Grade {p.grade}</span>
+                <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Grade {p.grade}</span>
               </button>
             ))}
-            <button onClick={() => setIsAddingKid(true)} className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all text-gray-400 hover:text-blue-500">
+            <button onClick={() => setIsAddingKid(true)} className="flex flex-col items-center justify-center p-4 rounded-3xl border-2 border-dashed border-gray-200 text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all min-h-[140px]">
               <span className="text-4xl mb-2">➕</span><span className="font-bold text-sm">Add Kid</span>
             </button>
           </div>
         </motion.div>
       ) : !isPlaying && !showTimesUp && !isShowingStats ? (
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200">
-          <div className="w-20 h-20 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200">
+          <div className="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-lg transform rotate-3">
              <span className="text-white font-black text-4xl">{activeProfile?.avatar}</span>
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-1 tracking-tight italic">Hi, {activeProfile?.name}!</h1>
@@ -149,16 +173,12 @@ function App() {
           
           <AnimatePresence mode="wait">
             {isChoosingModule && activeProfile ? (
-              <motion.div key="focus" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-left">
-                <p className="text-[10px] font-black text-gray-400 mb-4 uppercase text-center tracking-widest italic">Practice by Module:</p>
+              <motion.div key="focus" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <p className="text-[10px] font-black text-gray-400 mb-4 uppercase text-center tracking-widest italic">Choose Module:</p>
                 <div className="grid grid-cols-1 gap-2 mb-6 max-h-60 overflow-y-auto pr-1">
-                  <button onClick={() => updateActiveProfile({ focusModuleId: undefined })} className={`w-full p-4 rounded-2xl font-black text-sm flex justify-between items-center transition-all ${!activeProfile.focusModuleId ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-800'}`}>
-                    🌟 Mixed Practice {!activeProfile.focusModuleId && '✅'}
-                  </button>
+                  <button onClick={() => updateActiveProfile({ focusModuleId: undefined })} className={`w-full p-4 rounded-2xl font-black text-sm flex justify-between items-center transition-all ${!activeProfile.focusModuleId ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-800'}`}>🌟 Mixed Practice {!activeProfile.focusModuleId && '✅'}</button>
                   {MathEngine.getModulesForGrade(activeProfile.grade).map(mod => (
-                    <button key={mod.id} onClick={() => updateActiveProfile({ focusModuleId: mod.id })} className={`w-full p-4 rounded-2xl font-black text-xs flex justify-between items-center transition-all ${activeProfile.focusModuleId === mod.id ? 'bg-blue-600 text-white shadow-lg scale-95' : 'bg-blue-50 text-blue-800'}`}>
-                      <span>📦 Mod {mod.id}: {mod.name}</span> {activeProfile.focusModuleId === mod.id && '✅'}
-                    </button>
+                    <button key={mod.id} onClick={() => updateActiveProfile({ focusModuleId: mod.id })} className={`w-full p-4 rounded-2xl font-black text-xs flex justify-between items-center transition-all ${activeProfile.focusModuleId === mod.id ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-800'}`}><span>📦 Mod {mod.id}: {mod.name}</span> {activeProfile.focusModuleId === mod.id && '✅'}</button>
                   ))}
                 </div>
                 <button onClick={() => startChallenge(false)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl border-b-8 border-blue-800 shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider italic">START</button>
@@ -166,54 +186,54 @@ function App() {
               </motion.div>
             ) : isSwitchingGrade ? (
               <motion.div key="grade" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="overflow-hidden">
-                <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Choose Grade:</p>
+                <p className="text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest text-center">Choose Grade:</p>
                 <div className="grid grid-cols-3 gap-2">
                   {(['K','1','2','3','4','5'] as GradeLevel[]).map(g => (
-                    <button key={g} onClick={() => { updateActiveProfile({ grade: g, level: 1, focusModuleId: undefined }); setIsSwitchingGrade(false); }} className={`py-4 rounded-2xl font-black text-xl transition-all ${activeProfile?.grade === g ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>{g}</button>
+                    <button key={g} onClick={() => selectGrade(g)} className={`py-4 rounded-2xl font-black text-xl transition-all ${activeProfile?.grade === g ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>{g}</button>
                   ))}
                 </div>
                 <button onClick={() => setIsSwitchingGrade(false)} className="mt-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cancel</button>
               </motion.div>
             ) : (
               <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col space-y-4">
-                <button onClick={() => setIsModuleMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase italic tracking-wide">Practice Mode</button>
-                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-orange-800 uppercase italic tracking-wide">⚡ Speed Round</button>
-                <div className="grid grid-cols-3 gap-2 pt-4">
-                  <button onClick={() => setIsShowingStats(true)} className="bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase border-b-4 border-indigo-100 py-4 rounded-2xl hover:bg-indigo-100 transition-all active:scale-95">📊 Progress</button>
-                  <button onClick={() => setIsSwitchingGrade(true)} className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-4 rounded-2xl hover:bg-green-100 transition-all active:scale-95">🎓 Grade</button>
-                  <button onClick={() => setActiveId(null)} className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-4 rounded-2xl hover:bg-blue-100 transition-all active:scale-95">🔄 Switch</button>
+                <button onClick={() => setIsModuleMode(true)} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-blue-800 uppercase italic">Practice Mode</button>
+                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-5 rounded-3xl shadow-xl transition-all active:scale-95 text-xl border-b-8 border-orange-800 uppercase italic">⚡ Speed Round</button>
+                <div className="grid grid-cols-3 gap-3 pt-4 text-center">
+                  <button onClick={() => setIsShowingStats(true)} className="bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase border-b-4 border-indigo-100 py-4 rounded-2xl transition-all active:scale-95">📊 Stats</button>
+                  <button onClick={() => setIsSwitchingGrade(true)} className="bg-green-50 text-green-600 font-black text-[10px] uppercase border-b-4 border-green-200 py-4 rounded-2xl transition-all active:scale-95">🎓 Grade</button>
+                  <button onClick={() => setActiveId(null)} className="bg-blue-50 text-blue-600 font-black text-[10px] uppercase border-b-4 border-blue-100 py-4 rounded-2xl transition-all active:scale-95">🔄 Kid</button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="mt-8 flex justify-between text-gray-400 font-black uppercase tracking-widest text-[10px] w-full">
-            <span>Points: {activeProfile?.totalScore}</span><span>Proficiency: {getOverallProficiency()}%</span>
+          <div className="mt-8 flex justify-between text-gray-400 font-black uppercase tracking-widest text-[10px] w-full px-2">
+            <span>Points: {activeProfile?.totalScore}</span><span>Mastery: {getOverallProficiency()}%</span>
           </div>
         </motion.div>
       ) : isShowingStats ? (
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl text-center max-w-sm w-full border-b-8 border-blue-200">
-           <h2 className="text-3xl font-black text-gray-900 mb-2 tracking-tighter uppercase italic">Your Progress</h2>
+           <h2 className="text-3xl font-black text-gray-900 mb-6 tracking-tighter uppercase italic">My Progress</h2>
            <div className="bg-indigo-50 p-6 rounded-3xl mb-6">
               <p className="text-indigo-600 font-black text-[10px] uppercase tracking-widest mb-1">Overall Proficiency</p>
               <p className="text-5xl font-black text-indigo-700">{getOverallProficiency()}%</p>
            </div>
-           <div className="space-y-4 text-left mb-8 max-h-60 overflow-y-auto pr-1">
+           <div className="space-y-4 text-left mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {MathEngine.getModulesForGrade(activeProfile!.grade).map(m => {
                 const score = getModuleProficiency(m.id);
                 return (
-                  <div key={m.id}>
-                    <div className="flex justify-between items-center mb-1 px-1">
-                      <span className="text-[10px] font-black text-gray-500 uppercase">Mod {m.id}: {m.name}</span>
+                  <div key={m.id} className="bg-gray-50 p-3 rounded-2xl">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-black text-gray-500 uppercase">Mod {m.id}: {m.name}</span>
                       <span className="text-[10px] font-black text-indigo-600">{score}%</span>
                     </div>
-                    <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-100">
+                    <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-gray-100">
                       <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }} className={`h-full ${score > 80 ? 'bg-green-500' : score > 50 ? 'bg-yellow-400' : 'bg-indigo-400'}`} />
                     </div>
                   </div>
                 );
               })}
            </div>
-           <button onClick={() => setIsShowingStats(false)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl border-b-4 border-blue-800 uppercase">Back to Menu</button>
+           <button onClick={() => setIsShowingStats(false)} className="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl border-b-4 border-blue-800 uppercase italic">Back to Menu</button>
         </motion.div>
       ) : isPlaying ? (
         <div className="w-full max-w-lg">
@@ -251,14 +271,14 @@ function App() {
       <AnimatePresence>
         {isAddingKid && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-blue-600/95 z-50 flex flex-col items-center justify-center p-6 text-center">
-            <motion.div className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-sm border-b-8 border-blue-200">
+            <motion.div className="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-sm border-b-8 border-blue-200">
               <h2 className="text-3xl font-black text-gray-900 mb-8 tracking-tighter uppercase italic">New Genius</h2>
               <div className="space-y-6">
                 <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} className="w-full p-5 bg-gray-50 rounded-2xl border-4 border-gray-100 font-black outline-none focus:border-blue-400 transition-colors text-2xl" placeholder="e.g. Misha" />
                 <div className="grid grid-cols-3 gap-2">{(['K','1','2','3','4','5'] as GradeLevel[]).map(g => (
                   <button key={g} onClick={() => setNewGrade(g)} className={`py-4 rounded-2xl font-black text-xl transition-all ${newGrade === g ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}>{g}</button>
                 ))}</div>
-                <div className="flex pt-6 space-x-3"><button onClick={() => setIsAddingKid(false)} className="flex-1 font-black text-gray-400 uppercase tracking-widest text-sm">Cancel</button><button disabled={!newName.trim()} onClick={addProfile} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl hover:bg-blue-700 transition-all text-xl uppercase italic">GO!</button></div>
+                <div className="flex pt-6 space-x-3 text-center"><button onClick={() => setIsAddingKid(false)} className="flex-1 font-black text-gray-400 uppercase tracking-widest text-sm">Cancel</button><button disabled={!newName.trim()} onClick={addProfile} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black shadow-xl hover:bg-blue-700 transition-all disabled:opacity-50 text-xl uppercase italic">GO!</button></div>
               </div>
             </motion.div>
           </motion.div>
@@ -273,11 +293,11 @@ function App() {
             <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="bg-white p-12 rounded-[40px] shadow-2xl border-b-8 border-orange-200 w-full max-w-sm">
               <div className="text-8xl mb-6 text-orange-500 animate-pulse">⏰</div>
               <h2 className="text-4xl font-black text-gray-900 mb-2 uppercase italic tracking-tighter">Time's Up!</h2>
-              <div className="bg-orange-50 p-8 rounded-3xl mb-8 border-b-4 border-orange-100"><p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest mb-1">Total Scored</p><p className="text-7xl font-black text-orange-600">{sessionScore}</p>
-                {activeProfile && sessionScore >= activeProfile.highScore && sessionScore > 0 && <p className="text-green-600 font-black mt-3 text-sm tracking-tight animate-bounce">🏆 NEW HIGH SCORE! 🏆</p>}
+              <div className="bg-orange-50 p-8 rounded-3xl mb-8 border-b-4 border-orange-100 text-center"><p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest mb-1 text-center">Total Scored</p><p className="text-7xl font-black text-orange-600 text-center">{sessionScore}</p>
+                {activeProfile && sessionScore >= activeProfile.highScore && sessionScore > 0 && <p className="text-green-600 font-black mt-3 text-sm tracking-tight animate-bounce text-center">🏆 NEW HIGH SCORE! 🏆</p>}
               </div>
-              <div className="flex flex-col space-y-4">
-                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-3xl shadow-xl transition-all active:scale-95 text-2xl border-b-8 border-orange-800 uppercase italic tracking-wider">TRY AGAIN</button>
+              <div className="flex flex-col space-y-4 text-center">
+                <button onClick={() => startChallenge(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-3xl shadow-xl transition-all active:scale-95 text-2xl border-b-8 border-orange-800 uppercase italic tracking-wider text-center">TRY AGAIN</button>
                 <button onClick={resetGame} className="w-full bg-white text-gray-400 font-black py-6 rounded-3xl shadow-lg transition-all active:scale-95 text-xl border-b-8 border-gray-100 uppercase tracking-widest text-center">GO HOME</button>
               </div>
             </motion.div>
