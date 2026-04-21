@@ -8,7 +8,7 @@ interface Profile {
 
 const AVATARS = ['🚀', '🦄', '🦖', '🎨', '⚽', '🐯'];
 const TYPE_LABELS: Record<MathType, string> = { 
-  ADD: '➕ Addition', SUB: '➖ Subtraction', MUL: '✖️ Multiplication', DIV: '➗ Division', MISSING: '❓ Missing Numbers', SHAPE: '📐 Shapes', DECIMAL: '🔢 Decimals', FRACTION: '🍰 Fractions' 
+  ADD: '➕ Addition', SUB: '➖ Subtraction', MUL: '✖️ Multiplication', DIV: '➗ Division', MISSING: '❓ Missing Numbers', SHAPE: '📐 Shapes', DECIMAL: '🔢 Decimals', FRACTION: '🍰 Fractions', MONEY: '💰 Money', VOLUME: '🧊 Volume'
 };
 
 function App() {
@@ -142,7 +142,7 @@ function App() {
                     </button>
                   ))}
                 </div>
-                <button onClick={() => startChallenge(false)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl border-b-8 border-blue-800 shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider">START</button>
+                <button onClick={() => startChallenge(false)} className="w-full bg-blue-600 text-white font-black py-5 rounded-3xl border-b-8 border-blue-800 shadow-xl active:scale-95 transition-all text-xl uppercase tracking-wider text-center">START</button>
                 <button onClick={() => setIsFocusMode(false)} className="w-full text-[10px] mt-6 text-gray-400 font-bold text-center uppercase tracking-widest">Back</button>
               </motion.div>
             ) : isSwitchingGrade ? (
@@ -173,7 +173,7 @@ function App() {
       ) : isPlaying ? (
         <div className="w-full max-w-lg text-center">
           <div className="flex justify-between items-center mb-6">
-            <div className="bg-white px-4 py-2 rounded-full shadow-md border-b-4 border-gray-100 font-black text-blue-600 flex items-center space-x-2 text-sm italic">
+            <div className="bg-white px-4 py-2 rounded-full shadow-md border-b-4 border-gray-100 font-black text-blue-600 flex items-center space-x-2 text-sm italic text-center">
               <span className="text-xl">{activeProfile?.avatar}</span>
               <span className="uppercase">G{activeProfile?.grade} | L{activeProfile?.level}</span>
             </div>
@@ -234,7 +234,7 @@ function App() {
             <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="bg-white p-12 rounded-[40px] shadow-2xl border-b-8 border-orange-200 w-full max-w-sm">
               <div className="text-8xl mb-6 text-orange-500 animate-pulse text-center">⏰</div>
               <h2 className="text-4xl font-black text-gray-900 mb-2 uppercase italic tracking-tighter text-center">Time's Up!</h2>
-              <div className="bg-orange-50 p-8 rounded-3xl mb-8 border-b-4 border-orange-100"><p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest mb-1 text-center">Total Scored</p><p className="text-7xl font-black text-orange-600 text-center">{sessionScore}</p>
+              <div className="bg-orange-50 p-8 rounded-3xl mb-8 border-b-4 border-orange-100 text-center"><p className="text-gray-600 font-bold text-[10px] uppercase tracking-widest mb-1 text-center">Total Scored</p><p className="text-7xl font-black text-orange-600 text-center">{sessionScore}</p>
                 {activeProfile && sessionScore >= activeProfile.highScore && sessionScore > 0 && <p className="text-green-600 font-black mt-3 text-sm tracking-tight animate-bounce text-center">🏆 NEW HIGH SCORE! 🏆</p>}
               </div>
               <div className="flex flex-col space-y-4 text-center">
