@@ -8,12 +8,31 @@ export interface Challenge { id: string; grade: GradeLevel; type: MathType; leve
 export class MathEngine {
   static getModulesForGrade(grade: GradeLevel): ModuleInfo[] {
     switch (grade) {
-      case 'K': return [{ id: 1, name: 'Numbers to 10', types: ['ADD'] }, { id: 2, name: 'Shapes', types: ['SHAPE'] }, { id: 4, name: 'Number Pairs', types: ['ADD', 'SUB'] }];
-      case '1': return [{ id: 1, name: 'Sums to 10', types: ['ADD', 'SUB'] }, { id: 4, name: 'Place Value/Add to 100', types: ['ADD', 'MISSING'] }, { id: 5, name: 'Shapes', types: ['SHAPE'] }];
-      case '2': return [{ id: 1, name: 'Sums to 100', types: ['ADD', 'SUB'] }, { id: 7, name: 'Money & Data', types: ['MONEY'] }, { id: 8, name: 'Sums to 1000', types: ['ADD', 'SUB', 'MISSING'] }];
-      case '3': return [{ id: 1, name: 'Mul/Div (10x10)', types: ['MUL', 'DIV'] }, { id: 5, name: 'Fractions', types: ['FRACTION'] }, { id: 7, name: 'Geometry', types: ['SHAPE', 'ADD'] }];
-      case '4': return [{ id: 3, name: 'Mul/Div Multi-Digit', types: ['MUL', 'DIV'] }, { id: 5, name: 'Fraction Ops', types: ['FRACTION'] }, { id: 6, name: 'Decimals', types: ['DECIMAL'] }];
-      case '5': return [{ id: 1, name: 'Decimal Ops', types: ['DECIMAL'] }, { id: 3, name: 'Fraction Arith', types: ['FRACTION'] }, { id: 5, name: 'Volume & Area', types: ['VOLUME', 'MUL'] }];
+      case 'K': return [
+        { id: 1, name: 'Numbers to 10', types: ['ADD'] }, { id: 2, name: 'Shapes', types: ['SHAPE'] }, { id: 3, name: 'Comparison', types: ['ADD', 'SUB'] },
+        { id: 4, name: 'Number Pairs to 10', types: ['ADD', 'SUB'] }, { id: 5, name: 'Numbers to 100', types: ['ADD'] }, { id: 6, name: 'Analyzing Shapes', types: ['SHAPE'] }
+      ];
+      case '1': return [
+        { id: 1, name: 'Sums to 10', types: ['ADD', 'SUB'] }, { id: 2, name: 'Sums to 20', types: ['ADD', 'SUB'] }, { id: 3, name: 'Ordering Length', types: ['MEASURE'] },
+        { id: 4, name: 'Add/Sub to 40', types: ['ADD', 'SUB', 'MISSING'] }, { id: 5, name: 'Identifying Shapes', types: ['SHAPE'] }, { id: 6, name: 'Add/Sub to 100', types: ['ADD', 'SUB', 'MISSING'] }
+      ];
+      case '2': return [
+        { id: 1, name: 'Sums to 100', types: ['ADD', 'SUB'] }, { id: 2, name: 'Length Units', types: ['MEASURE'] }, { id: 3, name: 'Numbers to 1,000', types: ['ADD', 'SUB', 'MISSING'] },
+        { id: 4, name: 'Sums to 200', types: ['ADD', 'SUB'] }, { id: 5, name: 'Sums to 1,000', types: ['ADD', 'SUB'] }, { id: 6, name: 'Foundations of Mul/Div', types: ['MUL', 'DIV'] },
+        { id: 7, name: 'Money & Data', types: ['MONEY'] }, { id: 8, name: 'Time, Shapes, Fractions', types: ['TIME', 'SHAPE', 'FRACTION'] }
+      ];
+      case '3': return [
+        { id: 1, name: 'Mul/Div 2–5 & 10', types: ['MUL', 'DIV'] }, { id: 2, name: 'Place Value/Measure', types: ['ADD', 'SUB', 'MEASURE'] }, { id: 3, name: 'Mul/Div 0, 1, 6–9', types: ['MUL', 'DIV'] },
+        { id: 4, name: 'Multiplication & Area', types: ['MUL', 'VOLUME'] }, { id: 5, name: 'Fractions', types: ['FRACTION'] }, { id: 6, name: 'Collecting Data', types: ['ADD', 'SUB'] }, { id: 7, name: 'Geometry', types: ['SHAPE', 'ADD'] }
+      ];
+      case '4': return [
+        { id: 1, name: 'Place Value/Add/Sub', types: ['ADD', 'SUB'] }, { id: 2, name: 'Unit Conversions', types: ['MEASURE'] }, { id: 3, name: 'Multi-Digit Mul/Div', types: ['MUL', 'DIV'] },
+        { id: 4, name: 'Angle Measure', types: ['SHAPE'] }, { id: 5, name: 'Fraction Ops', types: ['FRACTION'] }, { id: 6, name: 'Decimal Fractions', types: ['DECIMAL'] }, { id: 7, name: 'Measurement/Mul', types: ['MUL', 'MEASURE'] }
+      ];
+      case '5': return [
+        { id: 1, name: 'Decimal Place Value', types: ['DECIMAL'] }, { id: 2, name: 'Multi-Digit Ops', types: ['MUL', 'DIV', 'DECIMAL'] }, { id: 3, name: 'Add/Sub Fractions', types: ['FRACTION'] },
+        { id: 4, name: 'Mul/Div Fractions', types: ['FRACTION'] }, { id: 5, name: 'Volume & Area', types: ['VOLUME', 'MUL'] }, { id: 6, name: 'Coordinate Plane', types: ['SHAPE'] }
+      ];
       default: return [];
     }
   }
@@ -46,11 +65,11 @@ export class MathEngine {
   private static getTypesForGrade(grade: GradeLevel, level: number): MathType[] {
     switch (grade) {
       case 'K': return level <= 3 ? ['SHAPE'] : ['ADD', 'SUB'];
-      case '1': return level <= 4 ? ['ADD', 'SUB'] : (level <= 8 ? ['MISSING'] : ['ADD', 'SUB', 'SHAPE']);
-      case '2': return level <= 3 ? ['ADD', 'SUB'] : (level <= 6 ? ['MONEY'] : ['ADD', 'SUB', 'MISSING']);
-      case '3': return level <= 5 ? ['MUL', 'DIV'] : (level <= 8 ? ['FRACTION'] : ['MUL', 'DIV', 'ADD', 'SUB']);
-      case '4': return level <= 4 ? ['MUL', 'DIV'] : (level <= 7 ? ['FRACTION'] : ['DECIMAL', 'ADD', 'SUB']);
-      case '5': return level <= 3 ? ['DECIMAL'] : (level <= 6 ? ['FRACTION'] : ['VOLUME', 'MUL', 'DIV']);
+      case '1': return level <= 4 ? ['ADD', 'SUB'] : (level <= 8 ? ['MISSING'] : ['ADD', 'SUB', 'MEASURE', 'SHAPE']);
+      case '2': return level <= 3 ? ['ADD', 'SUB'] : (level <= 6 ? ['MONEY', 'MEASURE'] : ['ADD', 'SUB', 'MISSING', 'TIME', 'MUL', 'SHAPE', 'FRACTION']);
+      case '3': return level <= 5 ? ['MUL', 'DIV', 'MEASURE'] : (level <= 8 ? ['FRACTION'] : ['MUL', 'DIV', 'VOLUME', 'ADD', 'SUB', 'SHAPE']);
+      case '4': return level <= 4 ? ['MUL', 'DIV', 'MEASURE'] : (level <= 7 ? ['FRACTION'] : ['DECIMAL', 'ADD', 'SUB', 'SHAPE']);
+      case '5': return level <= 3 ? ['DECIMAL'] : (level <= 6 ? ['FRACTION'] : ['VOLUME', 'MUL', 'DIV', 'SHAPE']);
       default: return ['ADD'];
     }
   }
@@ -69,6 +88,9 @@ export class MathEngine {
     let max = grade === 'K' ? 10 : (grade === '1' ? 20 : (grade === '2' ? 1000 : 10000));
     const a = Math.floor(Math.random() * (max - 2)) + 2; const b = Math.floor(Math.random() * a);
     return this.createBasic(grade, 'SUB', level, `${a} - ${b} = ?`, a - b);
+  }
+  private static genMoney(grade: GradeLevel, level: number): any {
+    const a = Math.floor(Math.random() * 100) + 5; return this.createBasic(grade, 'MONEY', level, `${a}¢ is how many cents?`, a);
   }
 
   private static genMul(grade: GradeLevel, level: number): any {
@@ -94,15 +116,12 @@ export class MathEngine {
     const a = (Math.random()*10).toFixed(level<=5?1:2); const b = (Math.random()*10).toFixed(level<=5?1:2); const r = (parseFloat(a)+parseFloat(b)).toFixed(level<=5?1:2);
     return this.createBasic(grade,'DECIMAL',level,`${a} + ${b} = ?`,parseFloat(r));
   }
-  private static genMoney(grade: GradeLevel, level: number): any {
-    const a = Math.floor(Math.random()*100)+5; return this.createBasic(grade,'MONEY',level,`${a}¢ is how many cents?`,a);
-  }
   private static genVolume(grade: GradeLevel, level: number): any {
     const l=Math.floor(Math.random()*5)+2, w=Math.floor(Math.random()*5)+2, h=Math.floor(Math.random()*5)+2;
     return this.createBasic(grade,'VOLUME',level,`Volume of ${l}x${w}x${h} box?`,l*w*h);
   }
   private static genTime(grade: GradeLevel, level: number): any {
-    const h=Math.floor(Math.random()*12)+1, m=[0,15,30,45][Math.floor(Math.random()*4)];
+    const h=Math.floor(Math.random()*12)+1, m=[0,15,30,45][Math.floor(Math.random() * 4)];
     return { grade, type:'TIME', level, question:`Minutes past ${h} if clock is ${h}:${m===0?'00':m}?`, options:this.shuffle([`${m}`,`${m+5}`,`${m-5}`,'60']), answer:`${m}` };
   }
   private static genMeasure(grade: GradeLevel, level: number): any {
